@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 import { useThree, useFrame } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
@@ -50,13 +50,20 @@ export function CameraController() {
     }
   });
 
-  const handleDoubleClick = () => {
+  const handleDoubleClick = useCallback(() => {
     const config = PRESET_CONFIGS[activePreset];
     targetPos.current.set(...config.position);
     targetLookAt.current.set(...config.target);
     isAnimating.current = true;
     animProgress.current = 0;
-  };
+  }, [activePreset]);
+
+  const { gl } = useThree();
+  useEffect(() => {
+    const canvas = gl.domElement;
+    canvas.addEventListener('dblclick', handleDoubleClick);
+    return () => canvas.removeEventListener('dblclick', handleDoubleClick);
+  }, [gl, handleDoubleClick]);
 
   return (
     <OrbitControls
@@ -65,7 +72,6 @@ export function CameraController() {
       dampingFactor={0.08}
       minDistance={0.5}
       maxDistance={6}
-      onDoubleClick={handleDoubleClick}
     />
   );
 }
